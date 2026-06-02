@@ -1,0 +1,31 @@
+# Dependency directories
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Environment variables
+.env
+.env.*
+backend/.env
+frontend/.env
+
+# Build outputs
+dist/
+build/
+backend/dist/
+backend/out/
+*.js.map
+*.d.ts.map
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+.DS_Store
+Thumbs.db
