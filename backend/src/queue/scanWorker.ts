@@ -1,69 +1,64 @@
 import { Worker, type Job, type ConnectionOptions } from 'bullmq';
 import { redis } from '../config/redis.js';
 import type { ScanJobData } from './scanQueue.js';
+import { analyzeHeadersWithAi } from '../services/securityAiAnalyzer.js';
+import type { AiSecurityAnalysis } from '../types/securityAi.js';
 
 /**
- * Função responsável pelo processamento real da varredura (Vulnerability Scan).
- * Aqui é onde você integrará suas ferramentas de análise HTTP, Nmap, Axios ou APIs de terceiros.
+ * Função responsável por processar o Job de varredura e integrar com o analisador de IA (Gemini).
+ * Retorna diretamente o resultado gerado pela IA.
  * 
  * @param job Instância do Job contendo os dados tipados vindos da fila
  */
-async function processScanJob(job: Job<ScanJobData, any, string>): Promise<unknown> {
-  const { url, userId, scanType } = job.data;
+async function processScanJob(job: Job<ScanJobData, AiSecurityAnalysis, string>): Promise<AiSecurityAnalysis> {
+  const { url, scanType } = job.data;
 
-  // Atualização opcional de progresso para que o usuário final acompanhe pelo frontend
-  await job.updateProgress(10);
-  console.log(`[Worker] Iniciando análise do Job ${job.id} | Tipo: ${scanType} | URL: ${url}`);
+  // Passo inicial: Atualiza progresso do Job
+  await job.updateProgress(20);
+  console.log(`[Worker] Iniciando análise real com IA para o Job ${job.id} | Tipo: ${scanType} | URL: ${url}`);
 
-  // Simulação de etapas da varredura em segundo plano (Assíncrona)
-  await job.updateProgress(40);
-  await new Promise((resolve) => setTimeout(resolve, 3000)); // Espera 3 segundos
+  try {
+    // Executa a análise real utilizando a consultoria de IA
+    const analysisResult = await analyzeHeadersWithAi(url);
 
-  await job.updateProgress(80);
-  await new Promise((resolve) => setTimeout(resolve, 2000)); // Espera 2 segundos
+    // Passo final: Atualiza progresso do Job para concluído
+    await job.updateProgress(100);
 
-  // Simulação de erro em caso de rota específica de teste para avaliar o retry automático
-  if (url.includes('fail-test')) {
-    throw new Error('Erro crítico simulado: Servidor de destino recusou conexões na porta 80.');
+    return analysisResult;
+  } catch (error: unknown) {
+    // Tratamento robusto de erros no console sem engolir exceções
+    console.error(
+      `[Worker] Falha crítica durante a execução da varredura com IA do Job ${job.id} para a URL: ${url}`,
+      error
+    );
+    throw error;
   }
-
-  await job.updateProgress(100);
-
-  // Retorno estruturado do resultado do job, que será capturado pelo evento 'completed'
-  return {
-    success: true,
-    targetUrl: url,
-    scannedBy: userId,
-    type: scanType,
-    vulnerabilitiesFound: 0, // Esqueleto inicial de retorno
-    finishedAt: new Date().toISOString(),
-  };
 }
 
 /**
  * Instanciação do Worker que escuta a fila 'scan-tasks'.
- * Passamos a mesma conexão do Redis singleton para otimizar os recursos do container.
+ * Passamos a mesma conexão do Redis singleton e definimos AiSecurityAnalysis como retorno.
  */
-export const scanWorker = new Worker<ScanJobData, any, string>('scan-tasks', processScanJob, {
+export const scanWorker = new Worker<ScanJobData, AiSecurityAnalysis, string>('scan-tasks', processScanJob, {
   connection: redis as unknown as ConnectionOptions,
-  concurrency: 2, // Configuração Recomendada: processa até 2 varreduras em paralelo
-}
-);
+  concurrency: 2, // Processa até 2 varreduras em paralelo
+});
 
 // Listeners de Eventos para Observabilidade e Monitoramento
-scanWorker.on('active', (job: Job<ScanJobData, any, string>) => {
+scanWorker.on('active', (job: Job<ScanJobData, AiSecurityAnalysis, string>) => {
   console.log(`[Worker] Job ${job.id} está ativo e sendo processado.`);
 });
 
-scanWorker.on('completed', (job: Job<ScanJobData, any, string>, result: unknown) => {
-  console.info(`[Worker] Job ${job.id} finalizado com sucesso! Resultado:`, result);
+scanWorker.on('completed', (job: Job<ScanJobData, AiSecurityAnalysis, string>) => {
+  console.info(`[Worker] Job ${job.id} finalizado com sucesso!`);
+  console.log(`[Worker] Resultado da IA retornado para o Job ${job.id}`);
 });
 
-scanWorker.on('failed', (job: Job<ScanJobData, any, string> | undefined, error: Error) => {
-  // Tratamento robusto: logs claros para alertar falhas na varredura sem travar a aplicação
+scanWorker.on('failed', (job: Job<ScanJobData, AiSecurityAnalysis, string> | undefined, error: Error) => {
   console.error(`[Worker] Falha no processamento do Job ${job?.id || 'desconhecido'}:`, error.message);
 });
 
 scanWorker.on('error', (error: unknown) => {
   console.error('[Worker] Erro crítico global no Worker do BullMQ:', error);
 });
+

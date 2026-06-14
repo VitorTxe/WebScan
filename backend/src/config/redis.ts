@@ -42,7 +42,7 @@ function getRedisInstance(): Redis {
 
     redisInstance.on('error', (error: unknown) => {
       // Tratamento de erros robusto: logs descritivos detalhados sem omitir contexto
-      console.error('[Redis] Erro grave identificado na conexão de dados:', error);
+      console.error('[Redis] Erro identificado na conexão de dados:', error);
     });
 
     redisInstance.on('close', () => {
@@ -61,11 +61,11 @@ function getRedisInstance(): Redis {
 export const redis = getRedisInstance();
 
 /**
- * Encerra a conexão ativa de forma graciosa (Graceful Shutdown)
+ * Encerra a conexão ativa
  */
 export async function closeRedisConnection(): Promise<void> {
   if (redisInstance) {
-    console.log('[Redis] Desconectando e encerrando pool de conexões de forma graciosa...');
+    console.log('[Redis] Desconectando e encerrando pool de conexões...');
     await redisInstance.quit();
     redisInstance = null;
   }
