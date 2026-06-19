@@ -1,9 +1,13 @@
 import express, { type Request, type Response } from 'express';
+import cors from 'cors';
 import { addScanJob, scanQueue } from './queue/scanQueue.js';
 import './queue/scanWorker.js'; // Inicializa o worker em segundo plano
 import type { AiSecurityAnalysis } from './types/securityAi.js';
 
 const app = express();
+app.use(cors({
+    origin: "*"
+}));
 app.use(express.json());
 
 /**
@@ -78,6 +82,8 @@ app.get("/scan/:jobId", async (req: Request, res: Response): Promise<void> => {
         res.status(500).json({ error: errorMessage });
     }
 });
+
+app.use(cors())
 
 app.listen(3000, () => {
     console.log("Servidor está rodando na porta 3000");
