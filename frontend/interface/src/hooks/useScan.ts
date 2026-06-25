@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ScanService } from "../service/server";
 import { type ScanStatusResponse } from "../types/scan";
 
-export function useScan(id: string) {
+export function useScan(url: string) {
     const [data, setData] = useState<ScanStatusResponse | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
@@ -10,8 +10,9 @@ export function useScan(id: string) {
     const handleScan = async () => {
         setIsLoading(true);
         setError(null);
+        
         try {
-            const response = await ScanService(id);
+            const response = await ScanService(url);
             setData(response);
             console.log("Dados recebidos da API:", response);
         } catch (err: unknown) {

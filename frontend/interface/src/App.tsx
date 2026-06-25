@@ -1,17 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ScanButton } from "./components/ScanButton";
 import { SecurityTerminal } from "./components/SecurityTerminal";
 import { useTerminalAnimation } from "./hooks/useTerminalAnimation";
 import { useScan } from "./hooks/useScan";
+import { useNavigate } from "react-router-dom";
 
 export default function App() {
   const [urlInput, setUrlInput] = useState<string>();
-  
+  const navigate = useNavigate()
+
   const { logs, isAnimating } = useTerminalAnimation({targetUrl: urlInput || "", autoStart: true,});
 
   // 1. Pegamos os dados e a função de scan do nosso custom hook
-  const { handleScan } = useScan(urlInput || "");
+  const { handleScan, data } = useScan(urlInput || "");
+
+  useEffect(() => {
+    if (data && data.jobId) {
+      navigate(`/vulnerabilidades/${data.jobId}`, {
+        state: { scanData: data }
+      });
+    }
+  }, [data, navigate]);
 
   return (
     <div className="h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 md:p-8 overflow-hidden select-none">
@@ -62,7 +72,6 @@ export default function App() {
               className="bg-transparent border-0 outline-none text-slate-200 placeholder-slate-500 text-sm w-full py-1.5 focus:ring-0"
             />
           </div>
-          {/* 2. Passamos a função para o botão e desabilitamos se não houver URL */}
           <ScanButton onClick={handleScan} disabled={!urlInput} />
         </div>
       </motion.form>

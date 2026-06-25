@@ -41,9 +41,7 @@ app.post("/scan", async (req: Request, res: Response): Promise<void> => {
     } catch (error: unknown) {
         console.error("[Server] Erro ao enfileirar varredura:", error);
         
-        const errorMessage = error instanceof Error 
-            ? error.message 
-            : "Erro interno ao processar a varredura.";
+        const errorMessage = error instanceof Error ? error.message : "Erro interno ao processar a varredura.";
 
         res.status(500).json({ error: errorMessage });
     }

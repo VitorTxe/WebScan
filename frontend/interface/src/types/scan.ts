@@ -19,3 +19,11 @@ export interface ScanStatusResponse {
     result: SecurityAnalysisResult | null;
     error: string | null;
 }
+
+export interface ScanRequest {
+    url: string;
+}
+
+export interface ScanResponse {
+    jobId: string;
+}

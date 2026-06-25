@@ -16,65 +16,25 @@ const getTimestamp = (): string => {
   });
 };
 
-const buildScanSequence = (url?: string): Array<{ log: LogEntry; delay: number }> => [
+const buildScanSequence = (): Array<{ log: LogEntry; delay: number }> => [
   {
-    log: { timestamp: getTimestamp(), type: "SYS", message: "Inicializando módulos de segurança..." },
+    log: { timestamp: getTimestamp(), type: "SYS", message: "Conectando ao painel de controle WebScan..." },
     delay: 400,
   },
   {
-    log: { timestamp: getTimestamp(), type: "SYS", message: "Carregando base de vulnerabilidades v4.2.7 (CVE 2026)..." },
-    delay: 800,
-  },
-  {
-    log: { timestamp: getTimestamp(), type: "INFO", message: "Motor de análise pronto. 12.847 assinaturas carregadas." },
+    log: { timestamp: getTimestamp(), type: "SUCCESS", message: "Conexão estabelecida com sucesso." },
     delay: 600,
   },
   {
-    log: { timestamp: getTimestamp(), type: "SYS", message: "Estabelecendo conexão segura (TLS 1.3)..." },
-    delay: 1000,
-  },
-  {
-    log: { timestamp: getTimestamp(), type: "SCAN", message: `Alvo definido → ${url || ""}` },
-    delay: 500,
-  },
-  {
-    log: { timestamp: getTimestamp(), type: "SCAN", message: "Resolvendo DNS... A record encontrado." },
-    delay: 700,
-  },
-  {
-    log: { timestamp: getTimestamp(), type: "SCAN", message: "Iniciando varredura de headers HTTP..." },
-    delay: 900,
-  },
-  {
-    log: { timestamp: getTimestamp(), type: "AUTH", message: "Verificando certificado SSL/TLS do servidor..." },
-    delay: 1100,
-  },
-  {
-    log: { timestamp: getTimestamp(), type: "SUCCESS", message: "Certificado válido — emitido por Let's Encrypt (exp: 2026-12)." },
-    delay: 600,
-  },
-  {
-    log: { timestamp: getTimestamp(), type: "SCAN", message: "Analisando Content-Security-Policy..." },
+    log: { timestamp: getTimestamp(), type: "INFO", message: "Olá! Seja muito bem-vindo ao sistema de auditoria." },
     delay: 800,
   },
   {
-    log: { timestamp: getTimestamp(), type: "SCAN", message: "Analisando X-Frame-Options, HSTS, X-Content-Type..." },
-    delay: 700,
+    log: { timestamp: getTimestamp(), type: "INFO", message: "Tudo pronto para iniciar uma análise de segurança." },
+    delay: 600,
   },
   {
-    log: { timestamp: getTimestamp(), type: "ERROR", message: "⚠ Header 'X-Frame-Options' ausente — risco de Clickjacking." },
-    delay: 500,
-  },
-  {
-    log: { timestamp: getTimestamp(), type: "SCAN", message: "Verificando exposição de informações sensíveis..." },
-    delay: 900,
-  },
-  {
-    log: { timestamp: getTimestamp(), type: "SUCCESS", message: "Header 'Strict-Transport-Security' configurado corretamente." },
-    delay: 400,
-  },
-  {
-    log: { timestamp: getTimestamp(), type: "INFO", message: "Varredura completa. Aguardando nova requisição..." },
+    log: { timestamp: getTimestamp(), type: "SYS", message: "Aguardando envio do site para varredura..." },
     delay: 0,
   },
 ];
@@ -100,7 +60,7 @@ export function useTerminalAnimation({ targetUrl, autoStart = true }: TerminalAn
     setLogs([]);
     setIsAnimating(true);
 
-    const sequence = buildScanSequence(targetUrlRef.current);
+    const sequence = buildScanSequence();
     let cumulativeDelay = 300;
 
     sequence.forEach((step, index) => {

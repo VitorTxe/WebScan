@@ -1,6 +1,5 @@
-// src/services/securityAiAnalyzer.ts
 import axios from "axios";
-import { GoogleGenAI } from "@google/genai"; // Ou @google/generative-ai dependendo da versão
+import { GoogleGenAI } from "@google/genai";
 import { type AiSecurityAnalysis } from "../types/securityAi.js";
 import dotenv from "dotenv";
 
@@ -10,6 +9,7 @@ dotenv.config();
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 export async function analyzeHeadersWithAi(url: string,): Promise<AiSecurityAnalysis> {
+
   try {
     // 1. Faz a requisição HTTP rápida para obter os headers reais
     const response = await axios.get(url, {
