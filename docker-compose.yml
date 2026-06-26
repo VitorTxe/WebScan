@@ -1,0 +1,52 @@
+services:
+  # 1. Serviço de Banco de Dados Redis (para gerenciar as filas de jobs do BullMQ)
+  redis:
+    image: redis:7-alpine
+    container_name: webscan-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # 2. Serviço Backend da API (Node + Express + TypeScript)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: webscan-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: always
+
+  # 3. Serviço Frontend (Nginx servindo a SPA React compilada)
+  frontend:
+    build:
+      context: ./frontend/interface
+      dockerfile: Dockerfile
+      args:
+        # Injeta a URL do backend na compilação do Vite.
+        # No seu navegador local, as chamadas serão direcionadas para o backend na porta 3000.
+        - VITE_API_URL=${VITE_API_URL}
+    container_name: webscan-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  redis_data:

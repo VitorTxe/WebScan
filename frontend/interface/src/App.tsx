@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { ScanButton } from "./components/ScanButton";
 import { SecurityTerminal } from "./components/SecurityTerminal";
@@ -12,16 +12,15 @@ export default function App() {
 
   const { logs, isAnimating } = useTerminalAnimation({targetUrl: urlInput || "", autoStart: true,});
 
-  // 1. Pegamos os dados e a função de scan do nosso custom hook
-  const { handleScan, data } = useScan(urlInput || "");
+  // 1. Pegamos a função de scan do nosso custom hook
+  const { handleScan } = useScan(urlInput || "");
 
-  useEffect(() => {
-    if (data && data.jobId) {
-      navigate(`/vulnerabilidades/${data.jobId}`, {
-        state: { scanData: data }
-      });
+  const handleStartScan = async () => {
+    const response = await handleScan();
+    if (response && response.jobId) {
+      navigate(`/vulnerabilidades/${response.jobId}`);
     }
-  }, [data, navigate]);
+  };
 
   return (
     <div className="h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 md:p-8 overflow-hidden select-none">
@@ -55,7 +54,7 @@ export default function App() {
 
         onSubmit={(e) => {
           e.preventDefault();
-          handleScan();
+          handleStartScan();
         }} 
         className="w-full max-w-2xl px-2 mb-6 shrink-0"
       >
@@ -72,7 +71,7 @@ export default function App() {
               className="bg-transparent border-0 outline-none text-slate-200 placeholder-slate-500 text-sm w-full py-1.5 focus:ring-0"
             />
           </div>
-          <ScanButton onClick={handleScan} disabled={!urlInput} />
+          <ScanButton onClick={handleStartScan} disabled={!urlInput} />
         </div>
       </motion.form>
 

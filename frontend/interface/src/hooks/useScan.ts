@@ -1,29 +1,28 @@
 import { useState } from "react";
-import { ScanService } from "../service/server";
-import { type ScanStatusResponse } from "../types/scan";
+import { startScan } from "../service/server";
+import { type ScanResponse } from "../types/scan";
 
 export function useScan(url: string) {
-    const [data, setData] = useState<ScanStatusResponse | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
 
-    const handleScan = async () => {
+    const handleScan = async (): Promise<ScanResponse | null> => {
         setIsLoading(true);
         setError(null);
         
         try {
-            const response = await ScanService(url);
-            setData(response);
-            console.log("Dados recebidos da API:", response);
+            const response = await startScan(url);
+            return response;
         } catch (err: unknown) {
-            const errorMessage = err instanceof Error ? err.message : "Erro desconhecido ao realizar a varredura";
+            const errorMessage = err instanceof Error ? err.message : "Erro desconhecido ao iniciar a varredura";
             setError(errorMessage);
             console.error("Erro no Hook useScan:", err);
+            return null;
         } finally {
             setIsLoading(false);
         }
     };
 
-    return { data, isLoading, error, handleScan };
+    return { isLoading, error, handleScan };
 }
 

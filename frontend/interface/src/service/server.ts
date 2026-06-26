@@ -10,10 +10,19 @@ const api = axios.create({
     },
 });
 
+export const startScan = async (urlToScan: string): Promise<ScanResponse> => {
+    try {
+        const response = await api.post<ScanResponse>("/scan", { url: urlToScan });
+        return response.data;
+    } catch (error) {
+        console.error("Erro ao iniciar a varredura:", error);
+        throw error;
+    }
+};
+
 export const ScanService = async (urlToScan: string): Promise<ScanStatusResponse> => {
     try {
-        // Envia a URL no corpo da requisição para o endpoint /scan do nosso servidor backend
-        // const requestData: ScanRequest = { url: urlToScan };
+        // Mantido para compatibilidade histórica se necessário, mas usaremos startScan
         const postResponse = await api.post<ScanResponse>("/scan", { url: urlToScan });
         const { jobId } = postResponse.data;
         console.log("Varredura iniciada! Job ID:", jobId);
