@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ScanButton } from "./components/ScanButton";
-import { SecurityTerminal } from "./components/SecurityTerminal";
-import { useTerminalAnimation } from "./hooks/useTerminalAnimation";
-import { useScan } from "./hooks/useScan";
+import { ScanButton } from "../components/ScanButton";
+import { SecurityTerminal } from "../components/SecurityTerminal";
+import { useTerminalAnimation } from "../hooks/useTerminalAnimation";
+import { useScan } from "../hooks/useScan";
 import { useNavigate } from "react-router-dom";
 
-export default function App() {
+export default function Home() {
   const [urlInput, setUrlInput] = useState<string>();
   const navigate = useNavigate()
 

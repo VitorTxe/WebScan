@@ -107,7 +107,7 @@ const Vulnerabilidades = () => {
                     ))}
                 </div>
 
-                {/* Panel Skeleton */}
+                {/* Painel Skeleton */}
                 <div className="bg-slate-900 border border-slate-800/60 rounded-xl p-6 space-y-6 animate-pulse">
                     <div className="flex items-center gap-3">
                         <div className="h-6 w-40 bg-slate-800 rounded-md"></div>

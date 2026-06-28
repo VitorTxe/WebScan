@@ -18,19 +18,30 @@ const getSeverityBorderColor = (severity: string) => {
     return "border-alert-info bg-alert-info";
 };
 
+const getSeverityWeight = (severity: string): number => {
+    const nameSeverity = severity.toLowerCase();
+    if (nameSeverity.includes("crítico") || nameSeverity.includes("critico") || nameSeverity.includes("crítica")) return 4;
+    if (nameSeverity.includes("alto") || nameSeverity.includes("alta")) return 3;
+    if (nameSeverity.includes("médio") || nameSeverity.includes("medio") || nameSeverity.includes("média")) return 2;
+    if (nameSeverity.includes("baixo") || nameSeverity.includes("baixa")) return 1;
+    return 0; // seguro, info, outros
+};
+
 interface PainelProps {
     headers: HeaderScanResult[];
     resumo: string;
 }
 
 const Painel = ({ headers, resumo }: PainelProps) => {
+    const sortedHeaders = [...headers].sort((a, b) => getSeverityWeight(b.severidade) - getSeverityWeight(a.severidade));
+    
     return (
         <div className="w-full mt-8">
             <h2 className="text-xl font-bold mb-4">Headers Analisados</h2>
             <p className="text-sm text-slate-400 mb-6">{resumo}</p>
 
             <div className="space-y-3">
-                {headers.map((header: HeaderScanResult, idx: number) => (
+                {sortedHeaders.map((header: HeaderScanResult, idx: number) => (
                     <div key={idx} className={`p-4 bg-[#0d1527] border border-slate-800 ${getSeverityBorderColor(header.severidade)} rounded-lg flex justify-between items-center hover:border-slate-800 transition-all duration-300`}>
                         <div>
                             <div className="flex items-center gap-3">

@@ -60,20 +60,11 @@ export const SecurityTerminal: FC<SecurityTerminalProps> = ({ logs, isAnimating 
               className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400"
             />
           )}
-          <span>terminal@sentinel:/live-telemetry</span>
-        </div>
-        <div className="text-slate-600 hover:text-slate-400 cursor-pointer text-xs font-mono">✕</div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex bg-slate-950/80 border-b border-slate-800 px-4">
-        <div className="px-4 py-3 text-xs font-mono font-bold tracking-wider text-cyan-400 border-b-2 border-cyan-400">
-          💻 TELEMETRY LOGS
         </div>
       </div>
 
       {/* Body */}
-      <div className=" min-h-[320px]">
+      <div className=" min-h-[325px]">
         {/* Left Side: Logs */}
         <div className="col-span-2 p-6 flex flex-col justify-between font-mono text-xs md:text-sm bg-color-950">
           <div className="space-y-3 max-h-[340px] overflow-y-auto pr-2">
