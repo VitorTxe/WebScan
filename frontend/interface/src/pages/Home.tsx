@@ -12,8 +12,8 @@ export default function Home() {
 
   const { logs, isAnimating } = useTerminalAnimation({targetUrl: urlInput || "", autoStart: true,});
 
-  // 1. Pegamos a função de scan do nosso custom hook
-  const { handleScan } = useScan(urlInput || "");
+  // Pegamos a função de scan do nosso custom hook
+  const { handleScan, error } = useScan(urlInput || "");
 
   const handleStartScan = async () => {
     const response = await handleScan();
@@ -46,7 +46,7 @@ export default function Home() {
         </p>
       </motion.div>
 
-      {/* Input de URL para Scan com Botão Desacoplado Sem Função */}
+      {/* Input de URL para Scan */}
       <motion.form 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -73,6 +73,19 @@ export default function Home() {
           </div>
           <ScanButton onClick={handleStartScan} disabled={!urlInput} />
         </div>
+
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-alert-critical text-xs mt-2 px-2 flex items-center gap-1.5 font-medium"
+          >
+            <svg className="w-4.5 h-4.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span>{error}</span>
+          </motion.div>
+        )}
       </motion.form>
 
       {/* Terminal */}
