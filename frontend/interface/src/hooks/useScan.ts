@@ -49,7 +49,6 @@ export function useScan(url: string) {
                 errorMessage = err.response.data.message;
             }
             setError(errorMessage);
-            console.error("Erro no Hook useScan:", err);
             return null;
         } finally {
             setIsLoading(false);

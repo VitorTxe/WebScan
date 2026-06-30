@@ -4,22 +4,20 @@ import type { ScanJobData } from './scanQueue.js';
 import { analyzeHeadersWithAi } from '../services/securityAiAnalyzer.js';
 import type { AiSecurityAnalysis } from '../types/securityAi.js';
 
-/**
- * Função responsável por processar o Job de varredura e integrar com o analisador de IA (Gemini).
- * Retorna diretamente o resultado gerado pela IA.
- * 
- * @param job Instância do Job contendo os dados tipados vindos da fila
- */
+// Função responsável por processar o Job de varredura e integrar com o analisador de IA (Gemini).
+// Retorna diretamente o resultado gerado pela IA.
 async function processScanJob(job: Job<ScanJobData, AiSecurityAnalysis, string>): Promise<AiSecurityAnalysis> {
   const { url, scanType } = job.data;
 
   // Passo inicial: Atualiza progresso do Job
-  await job.updateProgress(20);
+  await job.updateProgress(10);
   console.log(`[Worker] Iniciando análise real com IA para o Job ${job.id} | Tipo: ${scanType} | URL: ${url}`);
 
   try {
-    // Executa a análise real utilizando a consultoria de IA
-    const analysisResult = await analyzeHeadersWithAi(url);
+    // Executa a análise real utilizando a consultoria de IA e repassa o progresso em tempo real
+    const analysisResult = await analyzeHeadersWithAi(url, async (progress) => {
+      await job.updateProgress(progress);
+    });
 
     // Passo final: Atualiza progresso do Job para concluído
     await job.updateProgress(100);
@@ -41,7 +39,7 @@ async function processScanJob(job: Job<ScanJobData, AiSecurityAnalysis, string>)
  */
 export const scanWorker = new Worker<ScanJobData, AiSecurityAnalysis, string>('scan-tasks', processScanJob, {
   connection: redis as unknown as ConnectionOptions,
-  concurrency: 2, // Processa até 2 varreduras em paralelo
+  concurrency: 3, // Processa até 3 varreduras em paralelo
 });
 
 // Listeners de Eventos para Observabilidade e Monitoramento

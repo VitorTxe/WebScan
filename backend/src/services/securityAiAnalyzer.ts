@@ -8,10 +8,14 @@ dotenv.config();
 // Inicializa o SDK do Gemini com a chave de API do ambiente
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
-export async function analyzeHeadersWithAi(url: string,): Promise<AiSecurityAnalysis> {
+// Função responsável por analisar os headers HTTP de uma URL utilizando a consultoria de IA (Gemini)
+export async function analyzeHeadersWithAi(url: string, onProgress?: (progress: number) => void | Promise<void>): Promise<AiSecurityAnalysis> {
 
   try {
-    // 1. Faz a requisição HTTP rápida para obter os headers reais
+    // 1. Notifica início do download dos headers
+    if (onProgress) await onProgress(30);
+
+    // Faz a requisição HTTP rápida para obter os headers reais
     const response = await axios.get(url, {
       timeout: 5000,
       headers: { "User-Agent": "Webscan-Bot/1.0" },
@@ -19,7 +23,10 @@ export async function analyzeHeadersWithAi(url: string,): Promise<AiSecurityAnal
 
     const headers = response.headers;
 
-    // 2. Monta o Prompt contextualizado para a IA
+    // 2. Notifica início da análise com IA (Gemini)
+    if (onProgress) await onProgress(60);
+
+    // Monta o Prompt contextualizado para a IA
     const prompt = `
     Analise os headers HTTP de "${url}" e retorne JSON estrito neste schema:
     {
@@ -50,6 +57,9 @@ export async function analyzeHeadersWithAi(url: string,): Promise<AiSecurityAnal
       },
     });
 
+    // 4. Notifica finalização do processamento da IA
+    if (onProgress) await onProgress(90);
+
     const responseText = responseAi.text;
     if (!responseText) {
       throw new Error(
@@ -57,7 +67,7 @@ export async function analyzeHeadersWithAi(url: string,): Promise<AiSecurityAnal
       );
     }
 
-    // 4. Converte a resposta JSON em um objeto tipado de forma segura
+    // Converte a resposta JSON em um objeto tipado de forma segura
     const analysisResult: unknown = JSON.parse(responseText);
 
     // Fazemos um type-cast ou validação para garantir a integridade
