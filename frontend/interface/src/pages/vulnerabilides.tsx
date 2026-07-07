@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { getScanStatus } from "../service/server";
 import { type ScanStatusResponse } from "../types/scan";
 import Painel from "../components/Painel";
@@ -8,6 +8,7 @@ import Cards from "../components/Cards";
 const Vulnerabilidades = () => {
     const { jobId } = useParams<{ jobId: string }>();
     const location = useLocation();
+    const navigate = useNavigate();
 
     // Inicializa com o estado da navegação se disponível
     const stateData = location.state?.scanData as ScanStatusResponse | undefined;
@@ -61,6 +62,28 @@ const Vulnerabilidades = () => {
             if (intervalId) clearInterval(intervalId);
         };
     }, [jobId, stateData]);
+
+    if (error) {
+        return (
+            <div className="flex flex-col justify-center items-center min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 text-center">
+                <div className="max-w-md w-full bg-slate-900 border border-slate-800/80 p-6 rounded-2xl space-y-5 shadow-xl shadow-rose-950/10">
+                    <div className="w-12 h-12 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto mb-2 text-xl font-bold">
+                        ⚠️
+                    </div>
+                    <h2 className="text-xl font-bold tracking-tight">Erro na Varredura</h2>
+                    <p className="text-sm text-slate-400 leading-relaxed">
+                        {error}
+                    </p>
+                    <button 
+                        onClick={() => navigate("/")}
+                        className="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-100 font-semibold rounded-xl transition duration-200 cursor-pointer text-sm"
+                    >
+                        Voltar para o Início
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     if (isLoading || !data || !data.result) {
         return (
@@ -126,14 +149,6 @@ const Vulnerabilidades = () => {
                         ))}
                     </div>
                 </div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="flex justify-center items-center h-screen bg-slate-950 text-rose-500">
-                <span>Ocorreu um erro: {error}</span>
             </div>
         );
     }

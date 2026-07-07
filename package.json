@@ -1,0 +1,10 @@
+{
+    "name": "webscan root",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "dev:backend":"npm --prefix backend run dev",
+        "dev:frontend":"npm --prefix frontend/interface run dev",
+        "docker:up": "docker compose up --build"
+    }
+}

@@ -10,10 +10,14 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 // Função responsável por analisar os headers HTTP de uma URL utilizando a consultoria de IA (Gemini)
 export async function analyzeHeadersWithAi(url: string, onProgress?: (progress: number) => void | Promise<void>): Promise<AiSecurityAnalysis> {
+  let requestcount = 0 
 
   try {
-    // 1. Notifica início do download dos headers
+    // Notifica início do download dos headers
     if (onProgress) await onProgress(30);
+
+    requestcount++;
+    console.log(`[Metrics] Efetuando requisição externa #${requestcount} para capturar headers de: ${url}`);
 
     // Faz a requisição HTTP rápida para obter os headers reais
     const response = await axios.get(url, {
@@ -23,7 +27,7 @@ export async function analyzeHeadersWithAi(url: string, onProgress?: (progress: 
 
     const headers = response.headers;
 
-    // 2. Notifica início da análise com IA (Gemini)
+    // Notifica início da análise com IA (Gemini)
     if (onProgress) await onProgress(60);
 
     // Monta o Prompt contextualizado para a IA
@@ -47,7 +51,10 @@ export async function analyzeHeadersWithAi(url: string, onProgress?: (progress: 
     Headers escaneados:
     ${JSON.stringify(headers)}`;
 
-    // 3. Executa a chamada ao Gemini solicitando retorno no formato JSON estruturado
+    requestcount++;
+    console.log(`[Metrics] Efetuando requisição externa #${requestcount} (Chamada de IA ao Gemini)`);
+
+    // Executa a chamada ao Gemini solicitando retorno no formato JSON estruturado
     const responseAi = await ai.models.generateContent({
       model: "gemini-2.5-flash", // Modelo ideal para análises rápidas e JSON estruturado
       contents: prompt,
@@ -57,7 +64,9 @@ export async function analyzeHeadersWithAi(url: string, onProgress?: (progress: 
       },
     });
 
-    // 4. Notifica finalização do processamento da IA
+     console.log(`[Metrics] Varredura concluída. Total de requisições externas feitas pelo backend para este Job: ${requestcount}`);
+
+    // Notifica finalização do processamento da IA
     if (onProgress) await onProgress(90);
 
     const responseText = responseAi.text;

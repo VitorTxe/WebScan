@@ -26,7 +26,7 @@ async function processScanJob(job: Job<ScanJobData, AiSecurityAnalysis, string>)
   } catch (error: unknown) {
     // Tratamento robusto de erros no console sem engolir exceções
     console.error(
-      `[Worker] Falha crítica durante a execução da varredura com IA do Job ${job.id} para a URL: ${url}`,
+      `[Worker] Falha durante a execução da varredura com IA do Job ${job.id} para a URL: ${url}`,
       error
     );
     throw error;
@@ -57,6 +57,6 @@ scanWorker.on('failed', (job: Job<ScanJobData, AiSecurityAnalysis, string> | und
 });
 
 scanWorker.on('error', (error: unknown) => {
-  console.error('[Worker] Erro crítico global no Worker do BullMQ:', error);
+  console.error('[Worker] Erro global no Worker do BullMQ:', error);
 });
 
