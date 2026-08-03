@@ -4,19 +4,16 @@ import dotenv from 'dotenv';
 // Garante que as variáveis de ambiente sejam carregadas caso o arquivo seja importado de forma isolada
 dotenv.config();
 
-const REDIS_HOST = process.env.REDIS_HOST || '127.0.0.1';
-const REDIS_PORT = Number(process.env.REDIS_PORT) || 6379;
-const REDIS_PASSWORD = process.env.REDIS_PASSWORD || undefined;
+const REDIS_URL = process.env.REDIS_URL
+
 
 const redisOptions: RedisOptions = {
-  host: REDIS_HOST,
-  port: REDIS_PORT,
-  password: REDIS_PASSWORD,
   maxRetriesPerRequest: null, // Parâmetro obrigatório para compatibilidade perfeita com o BullMQ
+  enableReadyCheck: false,  //Impede verificação inicial,necessário para o BullMQ
+
   retryStrategy(times: number): number | null {
     // Estratégia de reconexão exponencial com limite máximo de 3 segundos
-    const delay = Math.min(times * 50, 3000);
-    return delay;
+    return Math.min(times * 50, 3000);
   },
 };
 
@@ -29,11 +26,22 @@ let redisInstance: Redis | null = null;
  */
 function getRedisInstance(): Redis {
   if (!redisInstance) {
-    redisInstance = new Redis(redisOptions);
+    if (REDIS_URL) {
+      // Produção: Upstash, Redis Cloud ou outro Redis externo
+      redisInstance = new Redis(REDIS_URL, redisOptions);
+    } else {
+      // Desenvolvimento local: Redis executado pelo Docker
+      redisInstance = new Redis({
+        ...redisOptions,
+        host: process.env.REDIS_HOST || '127.0.0.1',
+        port: Number(process.env.REDIS_PORT) || 6379,
+        password: process.env.REDIS_PASSWORD || undefined,
+      });
+    }
 
     // Monitoramento robusto de estados e observabilidade de conexões
     redisInstance.on('connect', () => {
-      console.log(`[Redis] Iniciando tentativa de conexão em ${REDIS_HOST}:${REDIS_PORT}...`);
+      console.log('[Redis] Iniciando conexão...');
     });
 
     redisInstance.on('ready', () => {

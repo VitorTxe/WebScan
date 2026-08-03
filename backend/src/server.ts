@@ -14,7 +14,7 @@ const limiter = rateLimit({
 });
 
 const corsOptions = cors({
-    origin: ["http://localhost:5173", "https://webscan-interface.up.railway.app"]
+    origin: ["http://localhost:5173", "http://localhost", "http://localhost:80"]
 });
 
 app.use(express.json());
