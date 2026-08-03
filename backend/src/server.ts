@@ -13,8 +13,16 @@ const limiter = rateLimit({
     message: 'Muitas requisições foram feitas, tente novamente mais tarde.'
 });
 
+const allowedOrigins = ["http://localhost:5173", "http://localhost", "http://localhost:80"];
+
+if (process.env.FRONTEND_URL) {
+    // Remove a barra final '/' caso tenha sido inserida na variável de ambiente
+    const cleanUrl = process.env.FRONTEND_URL.replace(/\/$/, "");
+    allowedOrigins.push(cleanUrl);
+}
+
 const corsOptions = cors({
-    origin: ["http://localhost:5173", "http://localhost", "http://localhost:80", "https://webscan-theta.vercel.app/"]
+    origin: allowedOrigins
 });
 
 app.use(express.json());
