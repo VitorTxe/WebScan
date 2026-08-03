@@ -14,7 +14,7 @@ const limiter = rateLimit({
 });
 
 const corsOptions = cors({
-    origin: ["http://localhost:5173", "http://localhost", "http://localhost:80"]
+    origin: ["http://localhost:5173", "http://localhost", "http://localhost:80", "https://webscan-theta.vercel.app/"]
 });
 
 app.use(express.json());
