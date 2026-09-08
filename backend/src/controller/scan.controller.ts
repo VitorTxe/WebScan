@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { addScanJob } from '../queue/scanQueue.js';
+import { createScan } from '../services/scanService.js';
 
 export async function scanController(req: Request, res: Response): Promise<void> {
     try {
@@ -10,16 +10,16 @@ export async function scanController(req: Request, res: Response): Promise<void>
             return;
         }
 
-        // Adiciona a tarefa à fila e retorna imediatamente
-        const job = await addScanJob(url, userId, scanType);
-        console.log(`[Server] Job ${job.id} enfileirado com sucesso para a URL: ${url}`);
+        // Registra o scan de forma atômica no Redis e inicia a análise assíncrona
+        const jobId = await createScan(url, userId, scanType);
+        console.log(`[Server] Job ${jobId} iniciado para a URL: ${url}`);
 
         res.status(202).json({
-            jobId: job.id,
+            jobId,
             message: "Varredura enfileirada com sucesso. Acompanhe o progresso usando GET /scan/:jobId.",
         });
     } catch (error: unknown) {
-        console.error("[Server] Erro ao enfileirar varredura:", error);
+        console.error("[Server] Erro ao registrar varredura:", error);
         
         const errorMessage = error instanceof Error ? error.message : "Erro interno ao processar a varredura.";
 

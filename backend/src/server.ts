@@ -1,8 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
-import './queue/scanWorker.js'; // Inicializa o worker em segundo plano
-import scanRoutes from "./routes/scan.routes.js"
+import scanRoutes from "./routes/scan.routes.js";
 
 const app = express();
 

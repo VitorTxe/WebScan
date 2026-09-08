@@ -4,18 +4,45 @@ import dotenv from 'dotenv';
 // Garante que as variáveis de ambiente sejam carregadas caso o arquivo seja importado de forma isolada
 dotenv.config();
 
-const REDIS_URL = process.env.REDIS_URL
+/**
+ * Lê a URL do Redis via variáveis de ambiente.
+ * Suporta tanto o padrão genérico (REDIS_URL) quanto a convenção comum do Upstash (UPSTASH_REDIS_URL).
+ */
+const rawRedisUrl: string | undefined = process.env.UPSTASH_REDIS_URL || process.env.REDIS_URL;
 
+/**
+ * O Upstash opera obrigatoriamente com criptografia em trânsito (TLS) na porta 6379.
+ * Fazemos uma normalização preventiva caso a string utilize 'redis://' em vez de 'rediss://'.
+ */
+const isUpstash: boolean = Boolean(rawRedisUrl?.includes('upstash.io'));
+const resolvedRedisUrl: string | undefined = rawRedisUrl
+  ? rawRedisUrl.startsWith('redis://') && isUpstash
+    ? rawRedisUrl.replace('redis://', 'rediss://')
+    : rawRedisUrl
+  : undefined;
 
-const redisOptions: RedisOptions = {
-  maxRetriesPerRequest: null, // Parâmetro obrigatório para compatibilidade perfeita com o BullMQ
-  enableReadyCheck: false,  //Impede verificação inicial,necessário para o BullMQ
+const baseRedisOptions: RedisOptions = {
+  maxRetriesPerRequest: null, // Obrigatório para o BullMQ gerenciar jobs sem estourar limite de retries
+  enableReadyCheck: false,    // Otimização necessária para o BullMQ e provedores serverless
+  keepAlive: 10000,           // Mantém a conexão TCP ativa a cada 10s para contornar o idle timeout do Upstash
+  family: 4,                  // Força resolução IPv4 evitando instabilidades de rota IPv6 em Windows/Cloud
+  connectTimeout: 10000,      // Timeout de conexão para handshakes em ambientes remotos
 
   retryStrategy(times: number): number | null {
-    // Estratégia de reconexão exponencial com limite máximo de 3 segundos
+    // Estratégia de reconexão exponencial com limite de 3 segundos
     return Math.min(times * 50, 3000);
   },
 };
+
+// Injeta configuração de TLS caso o destino seja o Upstash ou utilize esquema 'rediss://'
+export const redisOptions: RedisOptions = (isUpstash || resolvedRedisUrl?.startsWith('rediss://'))
+  ? {
+      ...baseRedisOptions,
+      tls: {
+        rejectUnauthorized: false,
+      },
+    }
+  : baseRedisOptions;
 
 // Instância protegida do Redis utilizando o padrão Singleton
 let redisInstance: Redis | null = null;
@@ -26,11 +53,11 @@ let redisInstance: Redis | null = null;
  */
 function getRedisInstance(): Redis {
   if (!redisInstance) {
-    if (REDIS_URL) {
-      // Produção: Upstash, Redis Cloud ou outro Redis externo
-      redisInstance = new Redis(REDIS_URL, redisOptions);
+    if (resolvedRedisUrl) {
+      // Produção / Cloud: Upstash, Redis Cloud ou instância externa via URI
+      redisInstance = new Redis(resolvedRedisUrl, redisOptions);
     } else {
-      // Desenvolvimento local: Redis executado pelo Docker
+      // Desenvolvimento local: Redis executado via Docker ou localmente
       redisInstance = new Redis({
         ...redisOptions,
         host: process.env.REDIS_HOST || '127.0.0.1',
@@ -39,7 +66,7 @@ function getRedisInstance(): Redis {
       });
     }
 
-    // Monitoramento robusto de estados e observabilidade de conexões
+    // Monitoramento de conexão e observabilidade
     redisInstance.on('connect', () => {
       console.log('[Redis] Iniciando conexão...');
     });
@@ -49,7 +76,7 @@ function getRedisInstance(): Redis {
     });
 
     redisInstance.on('error', (error: unknown) => {
-      // Tratamento de erros robusto: logs descritivos detalhados sem omitir contexto
+      // Tratamento robusto de erros: logs descritivos sem engolir contexto
       console.error('[Redis] Erro identificado na conexão de dados:', error);
     });
 
@@ -69,7 +96,7 @@ function getRedisInstance(): Redis {
 export const redis = getRedisInstance();
 
 /**
- * Encerra a conexão ativa
+ * Encerra a conexão ativa de forma limpa (Graceful Shutdown)
  */
 export async function closeRedisConnection(): Promise<void> {
   if (redisInstance) {
