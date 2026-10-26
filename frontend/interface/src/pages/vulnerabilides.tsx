@@ -1,67 +1,19 @@
-import { useEffect, useState } from "react";
-import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { getScanStatus } from "../service/server";
+import { useParams, useLocation } from "react-router-dom";
 import { type ScanStatusResponse } from "../types/scan";
+import { useScanStatus } from "../hooks/useScanStatus";
+import { BackButton } from "../components/BackButton";
 import Painel from "../components/Painel";
 import Cards from "../components/Cards";
 
 const Vulnerabilidades = () => {
     const { jobId } = useParams<{ jobId: string }>();
     const location = useLocation();
-    const navigate = useNavigate();
 
     // Inicializa com o estado da navegação se disponível
     const stateData = location.state?.scanData as ScanStatusResponse | undefined;
 
-    // Inicializa os estados calculando o valor inicial para evitar setStates síncronos
-    const [data, setData] = useState<ScanStatusResponse | null>(stateData || null);
-    const [isLoading, setIsLoading] = useState<boolean>(!(stateData && stateData.status === "completed"));
-    const [progress, setProgress] = useState<number>(stateData?.progress || 0);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        // Se já temos os dados (vindos da navegação anterior) e a varredura está concluída, não fazemos nada
-        if (stateData && stateData.status === "completed") return
-        if (!jobId) return;
-
-        let isMounted = true;
-        let intervalId: ReturnType<typeof setInterval> | null = null;
-
-        const pollScanStatus = async () => {
-            try {
-                const response = await getScanStatus(jobId);
-                if (!isMounted) return;
-
-                setProgress(response.progress);
-
-                if (response.status === "completed") {
-                    setData(response);
-                    setIsLoading(false);
-                    if (intervalId) clearInterval(intervalId);
-                } else if (response.status === "failed") {
-                    setError(response.error || "A varredura falhou no servidor.");
-                    setIsLoading(false);
-                    if (intervalId) clearInterval(intervalId);
-                }
-            } catch (err: unknown) {
-                if (!isMounted) return;
-                setError(err instanceof Error ? err.message : "Erro ao carregar os dados da varredura.");
-                setIsLoading(false);
-                if (intervalId) clearInterval(intervalId);
-            }
-        };
-
-        // Executa a primeira busca imediatamente
-        pollScanStatus();
-
-        // Inicia o polling a cada 1 segundo
-        intervalId = setInterval(pollScanStatus, 1000);
-
-        return () => {
-            isMounted = false;
-            if (intervalId) clearInterval(intervalId);
-        };
-    }, [jobId, stateData]);
+    // Gerenciamento de ciclo de vida assíncrono via Custom Hook dedicado
+    const { data, isLoading, progress, error } = useScanStatus(jobId, stateData);
 
     if (error) {
         return (
@@ -74,12 +26,7 @@ const Vulnerabilidades = () => {
                     <p className="text-sm text-slate-400 leading-relaxed">
                         {error}
                     </p>
-                    <button 
-                        onClick={() => navigate("/")}
-                        className="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-100 font-semibold rounded-xl transition duration-200 cursor-pointer text-sm"
-                    >
-                        Voltar para o Início
-                    </button>
+                    <BackButton label="Voltar para o Início" className="w-full justify-center py-3" />
                 </div>
             </div>
         );
@@ -87,7 +34,12 @@ const Vulnerabilidades = () => {
 
     if (isLoading || !data || !data.result) {
         return (
-            <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-12 space-y-8">
+            <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-12 space-y-6">
+                {/* Ação de retorno localizada no canto superior direito */}
+                <div className="flex justify-end">
+                    <BackButton />
+                </div>
+
                 {/* Header Skeleton */}
                 <div className="space-y-3 animate-pulse">
                     <div className="h-7 w-64 bg-slate-900 rounded-md"></div>
@@ -155,6 +107,11 @@ const Vulnerabilidades = () => {
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-12">
+            {/* Botão de retorno localizado no canto superior direito logo acima de Vulnerabilidades */}
+            <div className="flex justify-end mb-4">
+                <BackButton />
+            </div>
+
             <header className="mb-5">
                 <h1 className="text-2xl font-bold tracking-wider uppercase text-slate-300">
                     Painel de Vulnerabilidades
