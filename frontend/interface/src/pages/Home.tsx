@@ -12,10 +12,11 @@ export default function Home() {
 
   const { logs, isAnimating } = useTerminalAnimation({targetUrl: urlInput || "", autoStart: true,});
 
-  // Pegamos a função de scan do nosso custom hook
-  const { handleScan, error } = useScan(urlInput || "");
+  // Pegamos a função de scan e o estado de carregamento do custom hook
+  const { handleScan, error, isLoading } = useScan(urlInput || "");
 
   const handleStartScan = async () => {
+    if (isLoading || !urlInput) return;
     const response = await handleScan();
     if (response && response.jobId) {
       navigate(`/vulnerabilidades/${response.jobId}`);
@@ -67,11 +68,16 @@ export default function Home() {
               type="text" 
               value={urlInput || ""}
               onChange={(e) => setUrlInput(e.target.value)}
+              disabled={isLoading}
               placeholder="https://seusite.com"
-              className="bg-transparent border-0 outline-none text-slate-200 placeholder-slate-500 text-sm w-full py-1.5 focus:ring-0"
+              className="bg-transparent border-0 outline-none text-slate-200 placeholder-slate-500 text-sm w-full py-1.5 focus:ring-0 disabled:opacity-50"
             />
           </div>
-          <ScanButton onClick={handleStartScan} disabled={!urlInput} />
+          <ScanButton 
+            onClick={handleStartScan} 
+            disabled={!urlInput} 
+            isLoading={isLoading} 
+          />
         </div>
 
         {error && (
