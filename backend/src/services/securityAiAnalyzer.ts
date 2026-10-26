@@ -34,8 +34,8 @@ export async function analyzeHeadersWithAi(url: string, onProgress?: (progress: 
     const prompt = `
     Analise os headers HTTP de "${url}" e retorne JSON estrito neste schema:
     {
-      "score": number, // 0-100
-      "resumo": string, // máx 2 frases
+      "score": number, 
+      "resumo": string, 
       "headers": [
         {
           "nome": string,
